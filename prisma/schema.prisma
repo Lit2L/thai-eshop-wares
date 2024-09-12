@@ -1,0 +1,170 @@
+// PRISMA: CREATE FOLDER STRUCTURE MANUALLY ⭐️
+// Rather than running `npx prisma init` command, you can also manually create a
+// folder structure. This might be beneficial if you want more granular control
+// over the initialization process. You should create a new folder name 'prisma' 
+// in your project root, and in this folder, create a new file `schema.prisma`.
+
+// PRISMA: DEFINE YOUR DATA SOURCE AND GENERATOR ⭐️
+// In the `schema.prisma` file, define your data source and generator.
+// The 'datasource' block configures how to connect to your database.
+// The 'generator' block instructs Prisma to generate a client in a language.
+// In this case, a JavaScript client is generated.
+datasource db {
+  // Specifies a database provider (e.g., postgresql, mysql, sqlite, sqlserver).
+  provider = "postgresql"
+  // Connection URL to a database, stored in environment variable for security.
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// PRISMA: DEFINE YOUR DATABASE MODELS ⭐️
+// Define your database models in the 'model' block. Each model corresponds to a 
+// table in your database, and each field within a model represents a column in
+// that table. Define relationships between models (one-to-one, one-to-many) and
+// which will be represented appropriately in the underlying database. This is
+// the 'User' model in Prisma which maps to a 'User' table in your database.
+model User {
+  // Field 'id' of type 'String' in the 'User' table. `@id` is a decorator that
+  // specifies that this field is a primary key for this table. @default(cuid())
+  // is a decorator that specifies that by default, a collision-resistant id is
+  // generated for new records. 
+  id String @id @default(cuid())
+
+  // Field 'name' of type 'String' in the 'User' table. The '?' denotes this can
+  // be nullable, meaning it's allowed to not have a value. 
+  name String?
+
+  // A 'email' of type 'String' in the 'User' table. @unique is a decorator that
+  // specifies values here must be unique across all records in 'User' table. 
+  email String? @unique
+
+  // Its a type of 'DateTime' in the 'User' table. This field is used to store
+  // the timestamp when the user's email was verified. 
+  emailVerified DateTime?
+
+  // Field can be used to store the URL or path to the user's profile image.
+  image String?
+
+  // Used to store the id of the customer object in Stripe related to the user,
+  // if Stripe is being used for payment processing.
+  stripeCustomerId String?
+
+  // 👇🏻 One-to-many relationship
+  // This is a one-to-many relationship between 'User' and 'Account'.
+  // This means that one user can have multiple accounts. 'Account' is another
+  // model (or table) & 'accounts' is a list of Account records thats associated
+  // with this User. 'Account[]' denotes a list of Account objects.
+  accounts Account[]
+  // Same as above, one-to-many relationship between 'User' & 'Session'.
+  // This means that one user can have multiple sessions.
+  sessions Session[]
+  // This is a one-to-many relationship between 'User' and 'Order'.
+  // This means that one user can have multiple orders.
+  orders   Order[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  // 👇🏻 Many-to-one relationship
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  // 👇🏻 Many-to-one relationship
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String    @id @default(cuid())
+  // 👇🏻 Many-to-one relationship
+  // Defines a many-to-one relationship with the User model. The `userId` field
+  // in this model `Order` holds a foreign key for the `User`. 
+  user            User      @relation(fields: [userId], references: [id])
+  userId          String
+  amount          Float
+  currency        String
+  status          String
+  createdDate     DateTime  @default(now())
+  paymentIntentID String?   @unique
+  // 👇🏻 One-to-many relationship
+  products        Product[]
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  unit_amount Float
+  image       String?
+  quantity    Float   @default(0)
+  // 👇🏻 One-to-many relationship
+  orders      Order[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// PRISMA: SYNC YOUR MODELS WITH THE DATABASE (MIGRATE) ⭐️
+// After defining your models, run `npx prisma migrate dev` cmd to synchronize 
+// your models with the actual db structure. This cmd generates (SQL migration) 
+// files & applies them to the db. Remember to specify the connection string for 
+// your db in the DATABASE_URL environment variable.
+
+// In other words, to sync your models with the db (i.e. create the db tables),
+// run `npx prisma migrate dev` cmd in your terminal. This generates & executes
+// the necessary SQL migration files. Remember `DATABASE_URL` is and environment
+// variable that should point to your actual database hosted in this case on an
+// online service like railway.app 🚃.
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// npx prisma migrate dev
+// Environment variables loaded from .env
+// Prisma schema loaded from prisma/schema.prisma
+// Datasource "db": PostgreSQL database "railway", schema "public" at
+// "containers-us-west-96.railway.app:7035"
+
+// ✔ Enter a name for the new migration: … added my todo model
+// Applying migration `20230515104242_added_my_todo_model`
+
+// Following migration(s) have been created and applied from new schema changes:
+
+// migrations/
+//   └─ 20230515104242_added_my_todo_model/
+//     └─ migration.sql
+
+// Your database is now in sync with your schema.
+
+// ✔ Generated Prisma Client (4.14.0 | library) to ./node_modules/@prisma/client
+// in 108ms
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// NEXTAUTH: PRISMA ADAPTER FOR AUTHENTICATION ⭐️
+// We use NextAuth and provide an adapter for Prisma, which enables NextAuth to
+// store session and user info in your db using Prisma. For the details of how
+// to set up the adapter, check out NextAuth docs or the setup: `pages` folder
+// followed by 👉🏻 `/api/auth/[...nextauth].js` file.

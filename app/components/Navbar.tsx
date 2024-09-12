@@ -56,9 +56,9 @@ export default function Navbar({ user }: Session) {
 		}
 	}
 	return (
-		<nav className='flex items-center justify-between py-12'>
+		<nav className='flex items-center justify-between py-3 bg-white fixed left-0 top-0 z-40 w-full px-12'>
 			<Link href={'/'}>
-				<h1 className='text-lg'>Superdry Clone</h1>
+				<h1 className='text-lg font-lobster'>Gold Tier Fixtures</h1>
 			</Link>
 			<ul className='flex items-center justify-center gap-8'>
 				<li className='relative text-3xl cursor-pointer' onClick={() => cartStore.toggleCart()}>

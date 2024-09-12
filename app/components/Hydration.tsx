@@ -35,7 +35,7 @@ export default function Hydration({ children }: Props) {
 			) : (
 				<body
 					data-theme={themeStore.mode}
-					className=' font-karla w-full mx-auto max-w-full min-h-screen'
+					className=' font-karla w-full mx-auto max-w-full relative min-h-screen'
 				>
 					{children}
 				</body>
